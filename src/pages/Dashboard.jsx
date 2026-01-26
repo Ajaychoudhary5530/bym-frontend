@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import ProductTable from "../components/ProductTable";
 import AddProductModal from "../components/AddProductForm";
 import { getDashboardData } from "../services/productService";
+import api from "../services/api";
 import logo from "../assets/logo.png";
 
 export default function Dashboard() {
@@ -15,6 +16,8 @@ export default function Dashboard() {
   const [filtered, setFiltered] = useState([]);
   const [search, setSearch] = useState("");
   const [showAdd, setShowAdd] = useState(false);
+
+  const [exporting, setExporting] = useState(false);
 
   /* =========================
      LOAD DASHBOARD DATA
@@ -56,6 +59,34 @@ export default function Dashboard() {
     navigate("/login", { replace: true });
   };
 
+  /* =========================
+     EXPORT DASHBOARD CSV
+  ========================= */
+  const exportDashboardCSV = async () => {
+    try {
+      setExporting(true);
+
+      const res = await api.get("/dashboard/export", {
+        responseType: "blob",
+      });
+
+      const blob = new Blob([res.data], { type: "text/csv" });
+      const url = window.URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "dashboard-export.csv";
+      link.click();
+
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("EXPORT DASHBOARD ERROR:", err);
+      alert(err.response?.data?.message || "Export failed");
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
       <div className="bg-white p-4 rounded shadow">
@@ -72,6 +103,15 @@ export default function Dashboard() {
           </div>
 
           <div className="flex gap-2 flex-wrap">
+            {/* ✅ EXPORT BUTTON (ALL USERS) */}
+            <button
+              onClick={exportDashboardCSV}
+              disabled={exporting}
+              className="bg-green-600 text-white px-4 py-2 rounded"
+            >
+              {exporting ? "Exporting..." : "Export Excel"}
+            </button>
+
             {user?.role === "admin" && (
               <>
                 <button
