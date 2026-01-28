@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 
 import ProductTable from "../components/ProductTable";
 import AddProductModal from "../components/AddProductForm";
-import { getDashboardData } from "../services/productService";
 import api from "../services/api";
 import logo from "../assets/logo.png";
 
@@ -13,46 +12,48 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   const [products, setProducts] = useState([]);
-  const [filtered, setFiltered] = useState([]);
   const [search, setSearch] = useState("");
-  const [showAdd, setShowAdd] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
+  const [loading, setLoading] = useState(false);
 
+  const [showAdd, setShowAdd] = useState(false);
   const [exporting, setExporting] = useState(false);
+
+  const LIMIT = 20;
 
   /* =========================
      LOAD DASHBOARD DATA
   ========================= */
   useEffect(() => {
     loadProducts();
-  }, []);
+  }, [page, search]);
 
   const loadProducts = async () => {
     try {
-      const data = await getDashboardData();
-      setProducts(data);
-      setFiltered(data);
+      setLoading(true);
+
+      const res = await api.get("/products/with-stock", {
+        params: {
+          page,
+          limit: LIMIT,
+          search,
+        },
+      });
+
+      setProducts(res.data.data);
+      setPages(res.data.pages);
     } catch (err) {
       console.error("LOAD DASHBOARD ERROR:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  /* =========================
-     SEARCH
-  ========================= */
-  useEffect(() => {
-    if (!search.trim()) {
-      setFiltered(products);
-    } else {
-      const q = search.toLowerCase();
-      setFiltered(
-        products.filter(
-          (p) =>
-            p.name.toLowerCase().includes(q) ||
-            p.sku.toLowerCase().includes(q)
-        )
-      );
-    }
-  }, [search, products]);
+  const handleSearchChange = (e) => {
+    setSearch(e.target.value);
+    setPage(1); // 🔥 reset page when search changes
+  };
 
   const handleLogout = () => {
     logout();
@@ -103,7 +104,6 @@ export default function Dashboard() {
           </div>
 
           <div className="flex gap-2 flex-wrap">
-            {/* ✅ EXPORT BUTTON (ALL USERS) */}
             <button
               onClick={exportDashboardCSV}
               disabled={exporting}
@@ -121,7 +121,6 @@ export default function Dashboard() {
                   + Add Product
                 </button>
 
-                {/* ✅ BULK ADD BUTTON */}
                 <button
                   onClick={() => navigate("/bulk-products")}
                   className="bg-indigo-600 text-white px-4 py-2 rounded"
@@ -152,12 +151,39 @@ export default function Dashboard() {
           type="text"
           placeholder="Search by product name or SKU..."
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={handleSearchChange}
           className="border p-2 w-full mb-4 rounded"
         />
 
         {/* TABLE */}
-        <ProductTable products={filtered} onRefresh={loadProducts} />
+        {loading ? (
+          <p className="text-center py-6">Loading...</p>
+        ) : (
+          <ProductTable products={products} onRefresh={loadProducts} />
+        )}
+
+        {/* PAGINATION */}
+        <div className="flex justify-center gap-3 mt-4">
+          <button
+            disabled={page === 1}
+            onClick={() => setPage((p) => p - 1)}
+            className="px-3 py-1 border rounded disabled:opacity-50"
+          >
+            Prev
+          </button>
+
+          <span>
+            Page {page} of {pages}
+          </span>
+
+          <button
+            disabled={page === pages}
+            onClick={() => setPage((p) => p + 1)}
+            className="px-3 py-1 border rounded disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
       </div>
 
       {showAdd && (
