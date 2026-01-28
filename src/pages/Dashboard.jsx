@@ -41,7 +41,28 @@ export default function Dashboard() {
         },
       });
 
-      setProducts(res.data.data);
+      // 🔥 NORMALIZE DATA FOR TABLE
+      const normalized = res.data.data.map((p) => ({
+        _id: p._id,
+        name: p.name,
+        sku: p.sku,
+        category: p.category,
+        unit: p.unit,
+        variant: p.variant,
+
+        openingQty: Number(p.openingQty ?? 0),
+        currentQty: Number(p.currentQty ?? 0),
+
+        qtyIn: Number(p.qtyIn ?? 0),
+        amazonOut: Number(p.amazonOut ?? 0),
+        othersOut: Number(p.othersOut ?? 0),
+
+        minStock: Number(p.minStock ?? 0),
+        avgPurchasePrice: Number(p.avgPurchasePrice ?? 0),
+        stockValue: Number(p.stockValue ?? 0),
+      }));
+
+      setProducts(normalized);
       setPages(res.data.pages);
     } catch (err) {
       console.error("LOAD DASHBOARD ERROR:", err);
@@ -52,7 +73,7 @@ export default function Dashboard() {
 
   const handleSearchChange = (e) => {
     setSearch(e.target.value);
-    setPage(1); // 🔥 reset page when search changes
+    setPage(1); // reset page on search
   };
 
   const handleLogout = () => {
