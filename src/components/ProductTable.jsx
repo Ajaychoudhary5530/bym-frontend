@@ -11,7 +11,6 @@ export default function ProductTable({ products, onRefresh }) {
 
   return (
     <>
-      {/* Scrollable table with sticky header */}
       <div className="overflow-x-auto max-h-[520px] overflow-y-auto border rounded">
         <table className="min-w-full bg-white text-xs table-fixed">
           <thead className="bg-gray-100 sticky top-0 z-10">
@@ -49,17 +48,15 @@ export default function ProductTable({ products, onRefresh }) {
             )}
 
             {products.map((p) => {
-              const currentQty = Number(p.current || 0);
+              const currentQty = Number(p.quantity || 0);
               const minStock = Number(p.minStock || 0);
               const lowStock = currentQty < minStock;
 
               return (
                 <tr key={p._id} className={lowStock ? "bg-red-50" : ""}>
-                  <td className="border px-2 py-1 truncate" title={p.name}>
-                    {p.name}
-                  </td>
+                  <td className="border px-2 py-1 truncate">{p.name}</td>
 
-                  <td className="border px-2 py-1 truncate" title={p.category}>
+                  <td className="border px-2 py-1 truncate">
                     {p.category || "-"}
                   </td>
 
@@ -69,17 +66,13 @@ export default function ProductTable({ products, onRefresh }) {
 
                   <td className="border px-2 py-1 text-center">{p.unit}</td>
 
-                  {/* Opening stock (not stored separately) */}
-                  <td className="border px-2 py-1 text-center">-</td>
-
-                  {/* IN (not calculated here) */}
+                  {/* Opening stock not stored separately */}
                   <td className="border px-2 py-1 text-center">-</td>
 
                   <td className="border px-2 py-1 text-center">-</td>
-
+                  <td className="border px-2 py-1 text-center">-</td>
                   <td className="border px-2 py-1 text-center">-</td>
 
-                  {/* Current Stock */}
                   <td className="border px-2 py-1 text-center font-semibold">
                     {currentQty}
                   </td>
@@ -89,11 +82,11 @@ export default function ProductTable({ products, onRefresh }) {
                   </td>
 
                   <td className="border px-2 py-1 text-center">
-                    ₹ {Number(p.avgPrice || 0).toFixed(2)}
+                    ₹ {Number(p.avgPurchasePrice || 0).toFixed(2)}
                   </td>
 
                   <td className="border px-2 py-1 text-center font-semibold">
-                    ₹ {Number(p.value || 0).toFixed(2)}
+                    ₹ {Number(p.totalValue || 0).toFixed(2)}
                   </td>
 
                   <td className="border px-2 py-1 text-center">
@@ -108,7 +101,7 @@ export default function ProductTable({ products, onRefresh }) {
                     {user?.role === "admin" && (
                       <button
                         onClick={() => setStockInProduct(p)}
-                        className="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded"
+                        className="bg-green-600 text-white px-2 py-1 rounded"
                       >
                         IN
                       </button>
@@ -116,7 +109,7 @@ export default function ProductTable({ products, onRefresh }) {
 
                     <button
                       onClick={() => setStockOutProduct(p)}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded"
+                      className="bg-blue-600 text-white px-2 py-1 rounded"
                     >
                       OUT
                     </button>
@@ -128,7 +121,6 @@ export default function ProductTable({ products, onRefresh }) {
         </table>
       </div>
 
-      {/* STOCK IN MODAL */}
       {stockInProduct && user?.role === "admin" && (
         <StockInModal
           product={stockInProduct}
@@ -140,7 +132,6 @@ export default function ProductTable({ products, onRefresh }) {
         />
       )}
 
-      {/* STOCK OUT MODAL */}
       {stockOutProduct && (
         <StockOutModal
           product={stockOutProduct}
