@@ -20,17 +20,8 @@ export default function ProductTable({ products, onRefresh }) {
               <th className="border px-2 py-2 w-[80px] text-center">Variant</th>
               <th className="border px-2 py-2 w-[60px] text-center">UOM</th>
               <th className="border px-2 py-2 w-[70px] text-center">Opening</th>
-              <th className="border px-2 py-2 w-[55px] text-center">IN</th>
-              <th className="border px-2 py-2 w-[85px] text-center">
-                Amazon OUT
-              </th>
-              <th className="border px-2 py-2 w-[85px] text-center">
-                Others OUT
-              </th>
               <th className="border px-2 py-2 w-[70px] text-center">Current</th>
-              <th className="border px-2 py-2 w-[80px] text-center">
-                Min Stock
-              </th>
+              <th className="border px-2 py-2 w-[80px] text-center">Min Stock</th>
               <th className="border px-2 py-2 w-[90px] text-center">Avg Price</th>
               <th className="border px-2 py-2 w-[100px] text-center">Value</th>
               <th className="border px-2 py-2 w-[70px] text-center">Status</th>
@@ -41,7 +32,7 @@ export default function ProductTable({ products, onRefresh }) {
           <tbody>
             {products.length === 0 && (
               <tr>
-                <td colSpan="14" className="text-center py-6 text-gray-500">
+                <td colSpan="11" className="text-center py-6 text-gray-500">
                   No products found
                 </td>
               </tr>
@@ -53,33 +44,23 @@ export default function ProductTable({ products, onRefresh }) {
               const lowStock = currentQty < minStock;
 
               return (
-                <tr key={p._id} className={lowStock ? "bg-red-50" : ""}>
+                <tr key={p._id}>
                   <td className="border px-2 py-1 truncate">{p.name}</td>
-
-                  <td className="border px-2 py-1 truncate">
-                    {p.category || "-"}
-                  </td>
-
+                  <td className="border px-2 py-1">{p.category}</td>
                   <td className="border px-2 py-1 text-center">
-                    {p.variant || "-"}
+                    {p.variant || "NA"}
                   </td>
-
                   <td className="border px-2 py-1 text-center">{p.unit}</td>
 
-                  {/* Opening stock not stored separately */}
-                  <td className="border px-2 py-1 text-center">-</td>
-
-                  <td className="border px-2 py-1 text-center">-</td>
-                  <td className="border px-2 py-1 text-center">-</td>
-                  <td className="border px-2 py-1 text-center">-</td>
+                  <td className="border px-2 py-1 text-center">
+                    {p.openingStock}
+                  </td>
 
                   <td className="border px-2 py-1 text-center font-semibold">
                     {currentQty}
                   </td>
 
-                  <td className="border px-2 py-1 text-center">
-                    {minStock}
-                  </td>
+                  <td className="border px-2 py-1 text-center">{minStock}</td>
 
                   <td className="border px-2 py-1 text-center">
                     ₹ {Number(p.avgPurchasePrice || 0).toFixed(2)}
@@ -106,7 +87,6 @@ export default function ProductTable({ products, onRefresh }) {
                         IN
                       </button>
                     )}
-
                     <button
                       onClick={() => setStockOutProduct(p)}
                       className="bg-blue-600 text-white px-2 py-1 rounded"
