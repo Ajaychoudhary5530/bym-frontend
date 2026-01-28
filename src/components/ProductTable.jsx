@@ -11,7 +11,7 @@ export default function ProductTable({ products, onRefresh }) {
 
   return (
     <>
-      {/* ✅ fixed height scroll + sticky header */}
+      {/* Scrollable table with sticky header */}
       <div className="overflow-x-auto max-h-[520px] overflow-y-auto border rounded">
         <table className="min-w-full bg-white text-xs table-fixed">
           <thead className="bg-gray-100 sticky top-0 z-10">
@@ -49,7 +49,9 @@ export default function ProductTable({ products, onRefresh }) {
             )}
 
             {products.map((p) => {
-              const lowStock = Number(p.currentQty) < Number(p.minStock);
+              const currentQty = Number(p.current || 0);
+              const minStock = Number(p.minStock || 0);
+              const lowStock = currentQty < minStock;
 
               return (
                 <tr key={p._id} className={lowStock ? "bg-red-50" : ""}>
@@ -67,34 +69,31 @@ export default function ProductTable({ products, onRefresh }) {
 
                   <td className="border px-2 py-1 text-center">{p.unit}</td>
 
-                  <td className="border px-2 py-1 text-center">
-                    {p.openingQty || 0}
+                  {/* Opening stock (not stored separately) */}
+                  <td className="border px-2 py-1 text-center">-</td>
+
+                  {/* IN (not calculated here) */}
+                  <td className="border px-2 py-1 text-center">-</td>
+
+                  <td className="border px-2 py-1 text-center">-</td>
+
+                  <td className="border px-2 py-1 text-center">-</td>
+
+                  {/* Current Stock */}
+                  <td className="border px-2 py-1 text-center font-semibold">
+                    {currentQty}
                   </td>
 
-                  <td className="border px-2 py-1 text-center">{p.qtyIn}</td>
-
                   <td className="border px-2 py-1 text-center">
-                    {p.amazonOut}
+                    {minStock}
                   </td>
 
                   <td className="border px-2 py-1 text-center">
-                    {p.othersOut}
+                    ₹ {Number(p.avgPrice || 0).toFixed(2)}
                   </td>
 
                   <td className="border px-2 py-1 text-center font-semibold">
-                    {p.currentQty}
-                  </td>
-
-                  <td className="border px-2 py-1 text-center">
-                    {p.minStock || 0}
-                  </td>
-
-                  <td className="border px-2 py-1 text-center">
-                    ₹ {p.avgPurchasePrice || 0}
-                  </td>
-
-                  <td className="border px-2 py-1 text-center font-semibold">
-                    ₹ {(p.stockValue || 0).toFixed(2)}
+                    ₹ {Number(p.value || 0).toFixed(2)}
                   </td>
 
                   <td className="border px-2 py-1 text-center">
@@ -129,7 +128,7 @@ export default function ProductTable({ products, onRefresh }) {
         </table>
       </div>
 
-      {/* STOCK IN MODAL (ADMIN ONLY) */}
+      {/* STOCK IN MODAL */}
       {stockInProduct && user?.role === "admin" && (
         <StockInModal
           product={stockInProduct}
@@ -141,7 +140,7 @@ export default function ProductTable({ products, onRefresh }) {
         />
       )}
 
-      {/* STOCK OUT MODAL (ALL USERS) */}
+      {/* STOCK OUT MODAL */}
       {stockOutProduct && (
         <StockOutModal
           product={stockOutProduct}
