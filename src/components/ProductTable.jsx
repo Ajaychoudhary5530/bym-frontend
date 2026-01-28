@@ -48,8 +48,13 @@ export default function ProductTable({ products, onRefresh }) {
             )}
 
             {products.map((p) => {
-              const currentQty = Number(p.quantity || 0);
+              const openingQty = Number(p.openingQty || 0);
+              const qtyIn = Number(p.qtyIn || 0);
+              const amazonOut = Number(p.amazonOut || 0);
+              const othersOut = Number(p.othersOut || 0);
+              const currentQty = Number(p.currentQty || 0);
               const minStock = Number(p.minStock || 0);
+
               const lowStock = currentQty < minStock;
 
               return (
@@ -66,12 +71,21 @@ export default function ProductTable({ products, onRefresh }) {
 
                   <td className="border px-2 py-1 text-center">{p.unit}</td>
 
-                  {/* Opening stock not stored separately */}
-                  <td className="border px-2 py-1 text-center">-</td>
+                  <td className="border px-2 py-1 text-center">
+                    {openingQty}
+                  </td>
 
-                  <td className="border px-2 py-1 text-center">-</td>
-                  <td className="border px-2 py-1 text-center">-</td>
-                  <td className="border px-2 py-1 text-center">-</td>
+                  <td className="border px-2 py-1 text-center">
+                    {qtyIn}
+                  </td>
+
+                  <td className="border px-2 py-1 text-center">
+                    {amazonOut}
+                  </td>
+
+                  <td className="border px-2 py-1 text-center">
+                    {othersOut}
+                  </td>
 
                   <td className="border px-2 py-1 text-center font-semibold">
                     {currentQty}
@@ -86,7 +100,7 @@ export default function ProductTable({ products, onRefresh }) {
                   </td>
 
                   <td className="border px-2 py-1 text-center font-semibold">
-                    ₹ {Number(p.totalValue || 0).toFixed(2)}
+                    ₹ {Number(p.stockValue || 0).toFixed(2)}
                   </td>
 
                   <td className="border px-2 py-1 text-center">
