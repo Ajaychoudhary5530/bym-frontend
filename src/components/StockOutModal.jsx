@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import api from "../services/api";
 
 export default function StockOutModal({ product, onClose, onSuccess }) {
@@ -8,12 +8,54 @@ export default function StockOutModal({ product, onClose, onSuccess }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const currentQty = Number(product.currentQty ?? product.quantity ?? 0);
+
+  /* =========================
+     DEFAULT DATE = TODAY
+  ========================= */
+  useEffect(() => {
+    const today = new Date().toISOString().split("T")[0];
+    setDate(today);
+  }, []);
+
+  /* =========================
+     PREVIEW CALCULATION
+  ========================= */
+  const preview = useMemo(() => {
+    const q = Number(quantity);
+    if (!q || q <= 0) return null;
+
+    if (q > currentQty) {
+      return { error: "Insufficient stock" };
+    }
+
+    return {
+      newQty: currentQty - q,
+    };
+  }, [quantity, currentQty]);
+
+  /* =========================
+     SUBMIT HANDLER
+  ========================= */
   const submitHandler = async (e) => {
     e.preventDefault();
 
-    if (!quantity || Number(quantity) <= 0 || !date || !source) {
-      setError("All fields are required");
-      return;
+    const q = Number(quantity);
+
+    if (!q || q <= 0) {
+      return setError("Valid quantity is required");
+    }
+
+    if (q > currentQty) {
+      return setError("Insufficient stock");
+    }
+
+    if (!date) {
+      return setError("Date is required");
+    }
+
+    if (!["AMAZON", "OTHERS"].includes(source)) {
+      return setError("Invalid source");
     }
 
     try {
@@ -22,12 +64,13 @@ export default function StockOutModal({ product, onClose, onSuccess }) {
 
       await api.post("/stock/out", {
         productId: product._id,
-        quantity: Number(quantity),
+        quantity: q,
         date,
         source,
       });
 
       onSuccess();
+      onClose();
     } catch (err) {
       setError(err.response?.data?.message || "Stock OUT failed");
     } finally {
@@ -38,18 +81,29 @@ export default function StockOutModal({ product, onClose, onSuccess }) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
       <div className="bg-white p-6 rounded w-96 shadow">
-        <h2 className="text-lg font-bold mb-1">
-          Stock OUT – {product.name}
-        </h2>
+        <h2 className="text-lg font-bold mb-1">Stock OUT – {product.name}</h2>
 
         <p className="text-sm text-gray-600 mb-3">
-          Current stock: <b>{product.currentQty ?? product.quantity}</b>
+          Current Stock: <b>{currentQty}</b>
         </p>
 
         {error && <p className="text-red-600 mb-2">{error}</p>}
 
         <form onSubmit={submitHandler} className="space-y-3">
-          {/* Quantity */}
+          {/* SOURCE */}
+          <div>
+            <label className="text-sm font-medium">Source</label>
+            <select
+              className="border p-2 w-full rounded mt-1"
+              value={source}
+              onChange={(e) => setSource(e.target.value)}
+            >
+              <option value="AMAZON">Amazon</option>
+              <option value="OTHERS">Others (Flipkart / Offline / BYM)</option>
+            </select>
+          </div>
+
+          {/* QUANTITY */}
           <div>
             <label className="text-sm font-medium">Quantity</label>
             <input
@@ -61,31 +115,32 @@ export default function StockOutModal({ product, onClose, onSuccess }) {
             />
           </div>
 
-          {/* Date */}
+          {/* DATE */}
           <div>
             <label className="text-sm font-medium">Date</label>
             <input
               type="date"
+              max={new Date().toISOString().split("T")[0]}
               className="border p-2 w-full rounded mt-1"
               value={date}
               onChange={(e) => setDate(e.target.value)}
             />
           </div>
 
-          {/* Source */}
-          <div>
-            <label className="text-sm font-medium">Stock OUT Type</label>
-            <select
-              className="border p-2 w-full rounded mt-1"
-              value={source}
-              onChange={(e) => setSource(e.target.value)}
-            >
-              <option value="AMAZON">Amazon</option>
-              <option value="OTHERS">Others (Flipkart / Offline / BYM)</option>
-            </select>
-          </div>
+          {/* PREVIEW */}
+          {preview && (
+            <div className="bg-gray-50 border rounded p-3 text-sm">
+              {preview.error ? (
+                <p className="text-red-600">{preview.error}</p>
+              ) : (
+                <p>
+                  New Stock Qty: <b>{preview.newQty}</b>
+                </p>
+              )}
+            </div>
+          )}
 
-          {/* Buttons */}
+          {/* ACTIONS */}
           <div className="flex justify-end gap-2 pt-2">
             <button
               type="button"

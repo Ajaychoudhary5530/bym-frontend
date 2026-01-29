@@ -30,29 +30,37 @@ export default function StockInModal({ product, onClose, onSuccess }) {
   const currentAvgPrice = Number(product.purchasePrice ?? 0);
 
   const preview = useMemo(() => {
-    const q = Number(quantity);
+  const q = Number(quantity);
+  const p = Number(purchasePrice);
 
-    // If Return Product -> avg price should not change
-    if (stockType === "RETURN") {
-      if (q > 0) {
-        return {
-          newQty: currentQty + q,
-          newAvg: Number(currentAvgPrice.toFixed(2)),
-        };
-      }
-      return null;
-    }
+  if (q <= 0) return null;
 
-    // Normal New Stock -> avg price updates
-    const p = Number(purchasePrice);
-    if (q > 0 && p >= 0) {
-      const newQty = currentQty + q;
-      const newAvg = (currentQty * currentAvgPrice + q * p) / newQty;
-      return { newQty, newAvg: Number(newAvg.toFixed(2)) };
-    }
+  // 🔒 RETURN STOCK → AVG NEVER CHANGES
+  if (stockType === "RETURN") {
+    return {
+      newQty: currentQty + q,
+      newAvg: Number(currentAvgPrice.toFixed(2)),
+    };
+  }
 
-    return null;
-  }, [quantity, purchasePrice, currentQty, currentAvgPrice, stockType]);
+  // 🔥 NEW STOCK LOGIC (MATCH BACKEND)
+  let newAvg;
+
+  if (currentAvgPrice === 0) {
+    // FIRST REAL PURCHASE
+    newAvg = p;
+  } else {
+    newAvg =
+      (currentQty * currentAvgPrice + q * p) /
+      (currentQty + q);
+  }
+
+  return {
+    newQty: currentQty + q,
+    newAvg: Number(newAvg.toFixed(2)),
+  };
+}, [quantity, purchasePrice, currentQty, currentAvgPrice, stockType]);
+
 
   const uploadInvoice = async (e) => {
     e.preventDefault(); // 🔥 stop form submit

@@ -10,8 +10,13 @@ export default function BulkProductUpload() {
   const [msg, setMsg] = useState("");
   const [error, setError] = useState("");
 
+  /* =========================
+     DOWNLOAD CORRECT TEMPLATE
+  ========================= */
   const downloadTemplate = () => {
-    const csv = "name,variant,unit,category,openingQty,avgPurchasePrice\n";
+    const csv =
+      "name,sku,category,variant,unit,minStock,openingQty\n" +
+      "RESMED A1,RESMED-A1,RESMED,A1,Nos,5,13\n";
 
     const blob = new Blob([csv], {
       type: "text/csv;charset=utf-8;",
@@ -26,6 +31,9 @@ export default function BulkProductUpload() {
     document.body.removeChild(link);
   };
 
+  /* =========================
+     UPLOAD CSV
+  ========================= */
   const uploadCSV = async () => {
     try {
       setError("");
@@ -41,9 +49,6 @@ export default function BulkProductUpload() {
 
       setLoading(true);
 
-      // ✅ Correct endpoint based on server.js mounting:
-      // baseURL = http://localhost:5000/api
-      // final = http://localhost:5000/api/products/bulk-upload
       const res = await api.post("/products/bulk-upload", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
@@ -52,7 +57,7 @@ export default function BulkProductUpload() {
 
       setTimeout(() => {
         navigate("/dashboard", { replace: true });
-      }, 1000);
+      }, 1200);
     } catch (err) {
       setError(err.response?.data?.message || "Bulk upload failed");
     } finally {
@@ -65,11 +70,22 @@ export default function BulkProductUpload() {
       <div className="bg-white p-6 rounded shadow max-w-3xl">
         <h2 className="text-xl font-bold mb-2">Bulk Product Upload</h2>
 
-        <p className="text-sm text-gray-600 mb-4">
-          Required CSV columns:
-          <br />
-          <b>name, variant, unit, category, openingQty, avgPurchasePrice</b>
-        </p>
+        {/* 🔥 IMPORTANT INSTRUCTIONS */}
+        <div className="mb-4">
+          <p className="text-sm text-gray-700">
+            <strong>Required CSV columns:</strong>
+          </p>
+
+          <p className="text-sm text-gray-600 mt-1">
+            name, <b>sku</b>, category, variant, unit, minStock, openingQty
+          </p>
+
+          <p className="text-xs text-red-600 mt-2">
+            ⚠️ Do NOT include price or avgPurchasePrice in CSV.
+            <br />
+            Price must be added only via <b>Stock IN (NEW)</b>.
+          </p>
+        </div>
 
         <button
           onClick={downloadTemplate}

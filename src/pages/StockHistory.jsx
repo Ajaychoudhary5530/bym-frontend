@@ -15,10 +15,19 @@ export default function StockHistory() {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
 
+  /* =========================
+     LOAD PRODUCTS ONCE
+  ========================= */
   useEffect(() => {
     loadProducts();
-    loadHistory();
   }, []);
+
+  /* =========================
+     AUTO LOAD HISTORY WHEN FILTERS CHANGE
+  ========================= */
+  useEffect(() => {
+    loadHistory();
+  }, [from, to, productId]);
 
   const loadProducts = async () => {
     const res = await api.get("/products");
@@ -27,18 +36,36 @@ export default function StockHistory() {
 
   const loadHistory = async () => {
     const params = {};
+
     if (from && to) {
       params.from = from;
       params.to = to;
     }
+
     if (productId) params.productId = productId;
 
     const res = await api.get("/stock/history", { params });
     setLogs(res.data);
   };
 
+  /* =========================
+     EXPORT WITH FILTERS
+  ========================= */
   const exportExcel = async () => {
-    const res = await api.get("/stock/export", { responseType: "blob" });
+    const params = {};
+
+    if (from && to) {
+      params.from = from;
+      params.to = to;
+    }
+
+    if (productId) params.productId = productId;
+
+    const res = await api.get("/stock/export", {
+      params,
+      responseType: "blob",
+    });
+
     const blob = new Blob([res.data], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
 
@@ -46,6 +73,7 @@ export default function StockHistory() {
     link.href = url;
     link.download = "stock-history.csv";
     link.click();
+
     window.URL.revokeObjectURL(url);
   };
 
@@ -54,6 +82,9 @@ export default function StockHistory() {
     window.open(`http://localhost:5000${pdfUrl}`, "_blank");
   };
 
+  /* =========================
+     LOCAL SEARCH FILTER
+  ========================= */
   const filteredLogs = useMemo(() => {
     return logs.filter((l) => {
       const q = search.toLowerCase();
@@ -69,6 +100,8 @@ export default function StockHistory() {
       return matchSearch && matchType;
     });
   }, [logs, search, typeFilter]);
+
+  const today = new Date().toISOString().split("T")[0];
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
@@ -96,13 +129,32 @@ export default function StockHistory() {
 
         {/* FILTERS */}
         <div className="grid grid-cols-1 md:grid-cols-7 gap-3 mb-4">
-          <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="border p-2 rounded" />
-          <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="border p-2 rounded" />
+          <input
+            type="date"
+            max={today}
+            value={from}
+            onChange={(e) => setFrom(e.target.value)}
+            className="border p-2 rounded"
+          />
 
-          <select value={productId} onChange={(e) => setProductId(e.target.value)} className="border p-2 rounded">
+          <input
+            type="date"
+            max={today}
+            value={to}
+            onChange={(e) => setTo(e.target.value)}
+            className="border p-2 rounded"
+          />
+
+          <select
+            value={productId}
+            onChange={(e) => setProductId(e.target.value)}
+            className="border p-2 rounded"
+          >
             <option value="">All Products</option>
             {products.map((p) => (
-              <option key={p._id} value={p._id}>{p.name}</option>
+              <option key={p._id} value={p._id}>
+                {p.name}
+              </option>
             ))}
           </select>
 
@@ -114,13 +166,20 @@ export default function StockHistory() {
             className="border p-2 rounded"
           />
 
-          <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="border p-2 rounded">
+          <select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+            className="border p-2 rounded"
+          >
             <option value="">All</option>
             <option value="IN">IN</option>
             <option value="OUT">OUT</option>
           </select>
 
-          <button onClick={loadHistory} className="bg-blue-600 text-white rounded">
+          <button
+            onClick={loadHistory}
+            className="bg-blue-600 text-white rounded"
+          >
             Apply
           </button>
         </div>
@@ -153,16 +212,32 @@ export default function StockHistory() {
 
               {filteredLogs.map((l) => (
                 <tr key={l._id}>
-                  <td className="border px-2 py-1">{l.productId?.name}</td>
-                  <td className="border px-2 py-1 text-center">{l.type}</td>
-                  <td className="border px-2 py-1 text-center">{l.stockType || "-"}</td>
-                  <td className="border px-2 py-1 text-center">{l.condition || "-"}</td>
-                  <td className="border px-2 py-1 text-center">{l.quantity}</td>
+                  <td className="border px-2 py-1">
+                    {l.productId?.name}
+                  </td>
+
+                  <td className="border px-2 py-1 text-center">
+                    {l.type}
+                  </td>
+
+                  <td className="border px-2 py-1 text-center">
+                    {l.stockType || "-"}
+                  </td>
+
+                  <td className="border px-2 py-1 text-center">
+                    {l.condition || "-"}
+                  </td>
+
+                  <td className="border px-2 py-1 text-center">
+                    {l.quantity}
+                  </td>
 
                   <td className="border px-2 py-1 text-center">
                     {l.invoicePdfUrl ? (
                       <button
-                        onClick={() => previewInvoice(l.invoicePdfUrl)}
+                        onClick={() =>
+                          previewInvoice(l.invoicePdfUrl)
+                        }
                         className="text-blue-600 underline"
                       >
                         {l.invoiceNo || "View"}
@@ -172,11 +247,17 @@ export default function StockHistory() {
                     )}
                   </td>
 
-                  <td className="border px-2 py-1">{l.remarks || "-"}</td>
+                  <td className="border px-2 py-1">
+                    {l.remarks || "-"}
+                  </td>
+
                   <td className="border px-2 py-1">
                     {new Date(l.date).toLocaleDateString()}
                   </td>
-                  <td className="border px-2 py-1">{l.userId?.email}</td>
+
+                  <td className="border px-2 py-1">
+                    {l.userId?.email}
+                  </td>
                 </tr>
               ))}
             </tbody>
