@@ -41,7 +41,6 @@ export default function Dashboard() {
         },
       });
 
-      // 🔥 NORMALIZE DATA FOR TABLE
       const normalized = res.data.data.map((p) => ({
         _id: p._id,
         name: p.name,
@@ -73,7 +72,7 @@ export default function Dashboard() {
 
   const handleSearchChange = (e) => {
     setSearch(e.target.value);
-    setPage(1); // reset page on search
+    setPage(1);
   };
 
   const handleLogout = () => {
@@ -109,6 +108,9 @@ export default function Dashboard() {
     }
   };
 
+  // ✅ admin OR superadmin
+  const isAdmin = user?.role === "admin" || user?.role === "superadmin";
+
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
       <div className="bg-white p-4 rounded shadow">
@@ -117,7 +119,9 @@ export default function Dashboard() {
           <div className="flex items-center gap-3">
             <img src={logo} alt="Logo" className="h-10" />
             <div>
-              <h1 className="text-xl font-bold">BYM – Inventory Dashboard</h1>
+              <h1 className="text-xl font-bold">
+                BYM – Inventory Dashboard
+              </h1>
               <p className="text-sm text-gray-600">
                 {user?.email} ({user?.role})
               </p>
@@ -133,7 +137,7 @@ export default function Dashboard() {
               {exporting ? "Exporting..." : "Export Excel"}
             </button>
 
-            {user?.role === "admin" && (
+            {isAdmin && (
               <>
                 <button
                   onClick={() => setShowAdd(true)}

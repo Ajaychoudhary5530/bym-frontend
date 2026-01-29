@@ -2,12 +2,18 @@ import { useContext, useState } from "react";
 import { AuthContext } from "../context/AuthContext";
 import StockInModal from "./StockInModal";
 import StockOutModal from "./StockOutModal";
+import StockAdjustModal from "./StockAdjustModal";
 
 export default function ProductTable({ products, onRefresh }) {
   const { user } = useContext(AuthContext);
 
   const [stockInProduct, setStockInProduct] = useState(null);
   const [stockOutProduct, setStockOutProduct] = useState(null);
+  const [adjustProduct, setAdjustProduct] = useState(null);
+
+  // Allow admin + superadmin
+  const canStockIn =
+    user?.role === "admin" || user?.role === "superadmin";
 
   return (
     <>
@@ -31,10 +37,18 @@ export default function ProductTable({ products, onRefresh }) {
               <th className="border px-2 py-2 w-[80px] text-center">
                 Min Stock
               </th>
-              <th className="border px-2 py-2 w-[90px] text-center">Avg Price</th>
-              <th className="border px-2 py-2 w-[100px] text-center">Value</th>
-              <th className="border px-2 py-2 w-[70px] text-center">Status</th>
-              <th className="border px-2 py-2 w-[110px] text-center">Actions</th>
+              <th className="border px-2 py-2 w-[90px] text-center">
+                Avg Price
+              </th>
+              <th className="border px-2 py-2 w-[100px] text-center">
+                Value
+              </th>
+              <th className="border px-2 py-2 w-[70px] text-center">
+                Status
+              </th>
+              <th className="border px-2 py-2 w-[150px] text-center">
+                Actions
+              </th>
             </tr>
           </thead>
 
@@ -60,45 +74,34 @@ export default function ProductTable({ products, onRefresh }) {
               return (
                 <tr key={p._id} className={lowStock ? "bg-red-50" : ""}>
                   <td className="border px-2 py-1 truncate">{p.name}</td>
-
                   <td className="border px-2 py-1 truncate">
                     {p.category || "-"}
                   </td>
-
                   <td className="border px-2 py-1 text-center">
                     {p.variant || "-"}
                   </td>
-
-                  <td className="border px-2 py-1 text-center">{p.unit}</td>
-
+                  <td className="border px-2 py-1 text-center">
+                    {p.unit}
+                  </td>
                   <td className="border px-2 py-1 text-center">
                     {openingQty}
                   </td>
-
-                  <td className="border px-2 py-1 text-center">
-                    {qtyIn}
-                  </td>
-
+                  <td className="border px-2 py-1 text-center">{qtyIn}</td>
                   <td className="border px-2 py-1 text-center">
                     {amazonOut}
                   </td>
-
                   <td className="border px-2 py-1 text-center">
                     {othersOut}
                   </td>
-
                   <td className="border px-2 py-1 text-center font-semibold">
                     {currentQty}
                   </td>
-
                   <td className="border px-2 py-1 text-center">
                     {minStock}
                   </td>
-
                   <td className="border px-2 py-1 text-center">
                     ₹ {Number(p.avgPurchasePrice || 0).toFixed(2)}
                   </td>
-
                   <td className="border px-2 py-1 text-center font-semibold">
                     ₹ {Number(p.stockValue || 0).toFixed(2)}
                   </td>
@@ -107,26 +110,40 @@ export default function ProductTable({ products, onRefresh }) {
                     {lowStock ? (
                       <span className="text-red-600 font-bold">LOW</span>
                     ) : (
-                      <span className="text-green-600 font-semibold">OK</span>
+                      <span className="text-green-600 font-semibold">
+                        OK
+                      </span>
                     )}
                   </td>
 
-                  <td className="border px-2 py-1 text-center space-x-1">
-                    {user?.role === "admin" && (
-                      <button
-                        onClick={() => setStockInProduct(p)}
-                        className="bg-green-600 text-white px-2 py-1 rounded"
-                      >
-                        IN
-                      </button>
-                    )}
+                  {/* ACTION BUTTONS */}
+                  <td className="border px-2 py-1">
+                    <div className="flex justify-center items-center gap-1">
+                      {canStockIn && (
+                        <button
+                          onClick={() => setStockInProduct(p)}
+                          className="bg-green-600 text-white px-2 py-1 rounded text-xs min-w-[42px]"
+                        >
+                          IN
+                        </button>
+                      )}
 
-                    <button
-                      onClick={() => setStockOutProduct(p)}
-                      className="bg-blue-600 text-white px-2 py-1 rounded"
-                    >
-                      OUT
-                    </button>
+                      <button
+                        onClick={() => setStockOutProduct(p)}
+                        className="bg-blue-600 text-white px-2 py-1 rounded text-xs min-w-[42px]"
+                      >
+                        OUT
+                      </button>
+
+                      {canStockIn && (
+                        <button
+                          onClick={() => setAdjustProduct(p)}
+                          className="bg-purple-600 text-white px-2 py-1 rounded text-xs min-w-[42px]"
+                        >
+                          ADJ
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               );
@@ -135,7 +152,8 @@ export default function ProductTable({ products, onRefresh }) {
         </table>
       </div>
 
-      {stockInProduct && user?.role === "admin" && (
+      {/* STOCK IN */}
+      {stockInProduct && canStockIn && (
         <StockInModal
           product={stockInProduct}
           onClose={() => setStockInProduct(null)}
@@ -146,12 +164,25 @@ export default function ProductTable({ products, onRefresh }) {
         />
       )}
 
+      {/* STOCK OUT */}
       {stockOutProduct && (
         <StockOutModal
           product={stockOutProduct}
           onClose={() => setStockOutProduct(null)}
           onSuccess={() => {
             setStockOutProduct(null);
+            onRefresh();
+          }}
+        />
+      )}
+
+      {/* ADJUSTMENT */}
+      {adjustProduct && canStockIn && (
+        <StockAdjustModal
+          product={adjustProduct}
+          onClose={() => setAdjustProduct(null)}
+          onSuccess={() => {
+            setAdjustProduct(null);
             onRefresh();
           }}
         />
