@@ -11,12 +11,12 @@ export default function BulkProductUpload() {
   const [error, setError] = useState("");
 
   /* =========================
-     DOWNLOAD CORRECT TEMPLATE
+     DOWNLOAD TEMPLATE
   ========================= */
   const downloadTemplate = () => {
     const csv =
-      "name,sku,category,variant,unit,minStock,openingQty\n" +
-      "RESMED A1,RESMED-A1,RESMED,A1,Nos,5,13\n";
+      "name,sku,category,variant,unit,minStock,openingQty,openingPrice\n" +
+      "RESMED A1,RESMED-A1,RESMED,A1,Nos,5,13,120\n";
 
     const blob = new Blob([csv], {
       type: "text/csv;charset=utf-8;",
@@ -70,20 +70,18 @@ export default function BulkProductUpload() {
       <div className="bg-white p-6 rounded shadow max-w-3xl">
         <h2 className="text-xl font-bold mb-2">Bulk Product Upload</h2>
 
-        {/* 🔥 IMPORTANT INSTRUCTIONS */}
         <div className="mb-4">
           <p className="text-sm text-gray-700">
             <strong>Required CSV columns:</strong>
           </p>
 
           <p className="text-sm text-gray-600 mt-1">
-            name, <b>sku</b>, category, variant, unit, minStock, openingQty
+            name, sku, category, variant, unit, minStock,
+            openingQty, openingPrice
           </p>
 
-          <p className="text-xs text-red-600 mt-2">
-            ⚠️ Do NOT include price or avgPurchasePrice in CSV.
-            <br />
-            Price must be added only via <b>Stock IN (NEW)</b>.
+          <p className="text-xs text-gray-600 mt-2">
+            Opening price sets initial average price automatically.
           </p>
         </div>
 
