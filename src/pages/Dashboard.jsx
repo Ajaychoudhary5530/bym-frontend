@@ -119,9 +119,7 @@ export default function Dashboard() {
           <div className="flex items-center gap-3">
             <img src={logo} alt="Logo" className="h-10" />
             <div>
-              <h1 className="text-xl font-bold">
-                BYM – Inventory Dashboard
-              </h1>
+              <h1 className="text-xl font-bold">BYM – Inventory Dashboard</h1>
               <p className="text-sm text-gray-600">
                 {user?.email} ({user?.role})
               </p>
@@ -146,12 +144,14 @@ export default function Dashboard() {
                   + Add Product
                 </button>
 
-                <button
-                  onClick={() => navigate("/bulk-products")}
-                  className="bg-indigo-600 text-white px-4 py-2 rounded"
-                >
-                  Bulk Add
-                </button>
+                {user?.role === "superadmin" && (
+                  <button
+                    onClick={() => navigate("/bulk-products")}
+                    className="bg-indigo-600 text-white px-4 py-2 rounded"
+                  >
+                    Bulk Add
+                  </button>
+                )}
               </>
             )}
 

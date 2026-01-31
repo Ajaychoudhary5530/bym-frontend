@@ -1,14 +1,25 @@
-import { useState } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
+import { AuthContext } from "../context/AuthContext";
 
 export default function BulkProductUpload() {
   const navigate = useNavigate();
+  const { user } = useContext(AuthContext);
 
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState("");
   const [error, setError] = useState("");
+
+  /* =========================
+     🔐 SUPER ADMIN ONLY GUARD
+  ========================= */
+  useEffect(() => {
+    if (user && user.role !== "superadmin") {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [user, navigate]);
 
   /* =========================
      DOWNLOAD TEMPLATE
@@ -76,12 +87,16 @@ export default function BulkProductUpload() {
           </p>
 
           <p className="text-sm text-gray-600 mt-1">
-            name, sku, category, variant, unit, minStock,
-            openingQty, openingPrice
+            name, sku, category, variant, unit, minStock, openingQty, openingPrice
           </p>
 
           <p className="text-xs text-gray-600 mt-2">
-            Opening price sets initial average price automatically.
+            Opening price sets the <b>initial average price</b>.  
+            Future prices must be updated only via <b>Stock IN</b>.
+          </p>
+
+          <p className="text-xs text-red-600 mt-2">
+            ⚠️ Bulk upload is restricted to <b>Super Admin only</b>.
           </p>
         </div>
 
