@@ -62,14 +62,15 @@ export default function ProductTable({ products, onRefresh }) {
             )}
 
             {products.map((p) => {
-              const openingQty = Number(p.openingQty || 0);
-              const qtyIn = Number(p.qtyIn || 0);
-              const amazonOut = Number(p.amazonOut || 0);
-              const othersOut = Number(p.othersOut || 0);
-              const currentQty = Number(p.currentQty || 0);
-              const minStock = Number(p.minStock || 0);
+              const openingQty = Number(p.openingQty ?? 0);
+              const qtyIn = Number(p.qtyIn ?? 0);
+              const amazonOut = Number(p.amazonOut ?? 0);
+              const othersOut = Number(p.othersOut ?? 0);
+              const currentQty = Number(p.currentQty ?? 0);
+              const minStock = Number(p.minStock ?? 0);
 
-              const lowStock = currentQty < minStock;
+              // ✅ FIXED LOGIC
+              const lowStock = currentQty <= minStock;
 
               return (
                 <tr key={p._id} className={lowStock ? "bg-red-50" : ""}>
@@ -100,10 +101,10 @@ export default function ProductTable({ products, onRefresh }) {
                     {minStock}
                   </td>
                   <td className="border px-2 py-1 text-center">
-                    ₹ {Number(p.avgPurchasePrice || 0).toFixed(2)}
+                    ₹ {Number(p.avgPurchasePrice ?? 0).toFixed(2)}
                   </td>
                   <td className="border px-2 py-1 text-center font-semibold">
-                    ₹ {Number(p.stockValue || 0).toFixed(2)}
+                    ₹ {Number(p.stockValue ?? 0).toFixed(2)}
                   </td>
 
                   <td className="border px-2 py-1 text-center">
