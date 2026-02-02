@@ -20,6 +20,9 @@ export default function Dashboard() {
   const [showAdd, setShowAdd] = useState(false);
   const [exporting, setExporting] = useState(false);
 
+  // 🔥 STATUS FILTER
+  const [statusFilter, setStatusFilter] = useState("ALL"); // ALL | LOW | OK
+
   const LIMIT = 20;
 
   /* =========================
@@ -27,16 +30,18 @@ export default function Dashboard() {
   ========================= */
   useEffect(() => {
     loadProducts();
-  }, [page, search]);
+  }, [page, search, statusFilter]);
 
   const loadProducts = async () => {
     try {
       setLoading(true);
 
+      const isFiltered = statusFilter !== "ALL";
+
       const res = await api.get("/products/with-stock", {
         params: {
-          page,
-          limit: LIMIT,
+          page: isFiltered ? 1 : page,
+          limit: isFiltered ? 10000 : LIMIT, // 🔥 FETCH ALL
           search,
         },
       });
@@ -62,7 +67,10 @@ export default function Dashboard() {
       }));
 
       setProducts(normalized);
-      setPages(res.data.pages);
+
+      if (!isFiltered) {
+        setPages(res.data.pages);
+      }
     } catch (err) {
       console.error("LOAD DASHBOARD ERROR:", err);
     } finally {
@@ -79,6 +87,31 @@ export default function Dashboard() {
     logout();
     navigate("/login", { replace: true });
   };
+
+  /* =========================
+     STATUS FILTER + INVENTORY FIRST
+  ========================= */
+
+  // 1️⃣ Inventory first (products with stock on top)
+  const inventorySorted = [...products].sort((a, b) => {
+    if (a.currentQty > 0 && b.currentQty === 0) return -1;
+    if (a.currentQty === 0 && b.currentQty > 0) return 1;
+    return 0;
+  });
+
+  // 2️⃣ Status filter
+  const filteredProducts = inventorySorted.filter((p) => {
+    const currentQty = Number(p.currentQty ?? 0);
+    const minStock = Number(p.minStock ?? 0);
+
+    if (statusFilter === "LOW") return currentQty <= minStock;
+    if (statusFilter === "OK") return currentQty > minStock;
+    return true; // ALL
+  });
+
+  // 3️⃣ Display logic
+  const displayProducts =
+    statusFilter === "ALL" ? filteredProducts : filteredProducts; // show ALL when filtered
 
   /* =========================
      EXPORT DASHBOARD CSV
@@ -177,38 +210,56 @@ export default function Dashboard() {
           placeholder="Search by product name or SKU..."
           value={search}
           onChange={handleSearchChange}
-          className="border p-2 w-full mb-4 rounded"
+          className="border p-2 w-full mb-3 rounded"
         />
+
+        {/* STATUS FILTER */}
+        <div className="mb-3">
+          <select
+            value={statusFilter}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setPage(1);
+            }}
+            className="border px-3 py-2 rounded text-sm"
+          >
+            <option value="ALL">All Products</option>
+            <option value="LOW">Low Stock</option>
+            <option value="OK">OK Stock</option>
+          </select>
+        </div>
 
         {/* TABLE */}
         {loading ? (
           <p className="text-center py-6">Loading...</p>
         ) : (
-          <ProductTable products={products} onRefresh={loadProducts} />
+          <ProductTable products={displayProducts} onRefresh={loadProducts} />
         )}
 
-        {/* PAGINATION */}
-        <div className="flex justify-center gap-3 mt-4">
-          <button
-            disabled={page === 1}
-            onClick={() => setPage((p) => p - 1)}
-            className="px-3 py-1 border rounded disabled:opacity-50"
-          >
-            Prev
-          </button>
+        {/* PAGINATION (ONLY FOR ALL) */}
+        {statusFilter === "ALL" && (
+          <div className="flex justify-center gap-3 mt-4">
+            <button
+              disabled={page === 1}
+              onClick={() => setPage((p) => p - 1)}
+              className="px-3 py-1 border rounded disabled:opacity-50"
+            >
+              Prev
+            </button>
 
-          <span>
-            Page {page} of {pages}
-          </span>
+            <span>
+              Page {page} of {pages}
+            </span>
 
-          <button
-            disabled={page === pages}
-            onClick={() => setPage((p) => p + 1)}
-            className="px-3 py-1 border rounded disabled:opacity-50"
-          >
-            Next
-          </button>
-        </div>
+            <button
+              disabled={page === pages}
+              onClick={() => setPage((p) => p + 1)}
+              className="px-3 py-1 border rounded disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
 
       {showAdd && (
