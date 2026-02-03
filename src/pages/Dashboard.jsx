@@ -136,7 +136,8 @@ export default function Dashboard() {
     }
   };
 
-  const isAdmin = user?.role === "admin" || user?.role === "superadmin";
+  const isAdmin = user?.role === "admin";
+  const isSuperAdmin = user?.role === "superadmin";
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">

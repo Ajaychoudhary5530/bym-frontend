@@ -11,9 +11,15 @@ export default function ProductTable({ products, onRefresh }) {
   const [stockOutProduct, setStockOutProduct] = useState(null);
   const [adjustProduct, setAdjustProduct] = useState(null);
 
-  // Allow admin + superadmin
-  const canStockIn =
-    user?.role === "admin" || user?.role === "superadmin";
+  // ✅ ROLE SEPARATION
+  const isAdmin = user?.role === "admin";
+  const isSuperAdmin = user?.role === "superadmin";
+
+  // IN / OUT allowed for admin + superadmin
+  const canStockMove = isAdmin || isSuperAdmin;
+
+  // ADJUST only for superadmin
+  const canAdjust = isSuperAdmin;
 
   return (
     <>
@@ -116,9 +122,10 @@ export default function ProductTable({ products, onRefresh }) {
                     )}
                   </td>
 
+                  {/* ACTIONS */}
                   <td className="border px-2 py-1">
                     <div className="flex justify-center items-center gap-1">
-                      {canStockIn && (
+                      {canStockMove && (
                         <button
                           onClick={() => setStockInProduct(p)}
                           className="bg-green-600 text-white px-2 py-1 rounded text-xs min-w-[42px]"
@@ -127,14 +134,16 @@ export default function ProductTable({ products, onRefresh }) {
                         </button>
                       )}
 
-                      <button
-                        onClick={() => setStockOutProduct(p)}
-                        className="bg-blue-600 text-white px-2 py-1 rounded text-xs min-w-[42px]"
-                      >
-                        OUT
-                      </button>
+                      {canStockMove && (
+                        <button
+                          onClick={() => setStockOutProduct(p)}
+                          className="bg-blue-600 text-white px-2 py-1 rounded text-xs min-w-[42px]"
+                        >
+                          OUT
+                        </button>
+                      )}
 
-                      {canStockIn && (
+                      {canAdjust && (
                         <button
                           onClick={() => setAdjustProduct(p)}
                           className="bg-purple-600 text-white px-2 py-1 rounded text-xs min-w-[42px]"
@@ -152,7 +161,7 @@ export default function ProductTable({ products, onRefresh }) {
       </div>
 
       {/* MODALS */}
-      {stockInProduct && canStockIn && (
+      {stockInProduct && canStockMove && (
         <StockInModal
           product={stockInProduct}
           onClose={() => setStockInProduct(null)}
@@ -163,7 +172,7 @@ export default function ProductTable({ products, onRefresh }) {
         />
       )}
 
-      {stockOutProduct && (
+      {stockOutProduct && canStockMove && (
         <StockOutModal
           product={stockOutProduct}
           onClose={() => setStockOutProduct(null)}
@@ -174,7 +183,7 @@ export default function ProductTable({ products, onRefresh }) {
         />
       )}
 
-      {adjustProduct && canStockIn && (
+      {adjustProduct && canAdjust && (
         <StockAdjustModal
           product={adjustProduct}
           onClose={() => setAdjustProduct(null)}
