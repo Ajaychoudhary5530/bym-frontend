@@ -26,6 +26,12 @@ export default function Dashboard() {
   const LIMIT = 20;
 
   /* =========================
+     ROLE FLAGS (✅ FIXED)
+  ========================= */
+  const isAdmin = ["admin", "superadmin"].includes(user?.role);
+  const isSuperAdmin = user?.role === "superadmin";
+
+  /* =========================
      LOAD DASHBOARD DATA
   ========================= */
   useEffect(() => {
@@ -109,7 +115,7 @@ export default function Dashboard() {
   });
 
   /* =========================
-     EXPORT DASHBOARD CSV
+     EXPORT CSV
   ========================= */
   const exportDashboardCSV = async () => {
     try {
@@ -129,15 +135,12 @@ export default function Dashboard() {
 
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      console.error("EXPORT DASHBOARD ERROR:", err);
+      console.error("EXPORT ERROR:", err);
       alert(err.response?.data?.message || "Export failed");
     } finally {
       setExporting(false);
     }
   };
-
-  const isAdmin = user?.role === "admin";
-  const isSuperAdmin = user?.role === "superadmin";
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
@@ -154,6 +157,7 @@ export default function Dashboard() {
             </div>
           </div>
 
+          {/* ACTION BUTTONS */}
           <div className="flex gap-2 flex-wrap">
             <button
               onClick={exportDashboardCSV}
@@ -164,23 +168,21 @@ export default function Dashboard() {
             </button>
 
             {isAdmin && (
-              <>
-                <button
-                  onClick={() => setShowAdd(true)}
-                  className="bg-blue-600 text-white px-4 py-2 rounded"
-                >
-                  + Add Product
-                </button>
+              <button
+                onClick={() => setShowAdd(true)}
+                className="bg-blue-600 text-white px-4 py-2 rounded"
+              >
+                + Add Product
+              </button>
+            )}
 
-                {user?.role === "superadmin" && (
-                  <button
-                    onClick={() => navigate("/bulk-products")}
-                    className="bg-indigo-600 text-white px-4 py-2 rounded"
-                  >
-                    Bulk Add
-                  </button>
-                )}
-              </>
+            {isSuperAdmin && (
+              <button
+                onClick={() => navigate("/bulk-products")}
+                className="bg-indigo-600 text-white px-4 py-2 rounded"
+              >
+                Bulk Add
+              </button>
             )}
 
             <button
@@ -258,6 +260,7 @@ export default function Dashboard() {
         )}
       </div>
 
+      {/* ADD PRODUCT MODAL */}
       {showAdd && (
         <AddProductModal
           onClose={() => setShowAdd(false)}
